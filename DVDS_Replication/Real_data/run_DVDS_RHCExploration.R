@@ -434,12 +434,29 @@ close(fileConn)
 
 # Statistics on changing the odds of treatment 
 glm_changes = melt(pred_drops, id.vars = c("obs_id", "Z", "pred_SL", "None"))
-glm_changes[, log_odds_ratio_change := log(None / (1-None)) - log(value / (1-value))]
-glm_changes[, LargerChange := abs(log_odds_ratio_change) >= abs(log(estimated_sufficient_OR))]
+glm_changes[, odds_ratio_change := (None / (1-None)) / (value / (1-value))]
+glm_changes[, LargerChange := abs(log(odds_ratio_change)) >= abs(log(estimated_sufficient_OR))]
 fwrite(
   glm_changes[, .(PercLargerChanges = 100 * mean(LargerChange)), by = variable][order(-PercLargerChanges)],
   "Results/Tabs/statistics_drops_sufficient.csv"
 )
+
+
+
+for (this_var in c("ad_neuro", "surv2md1", "pafi1")) {
+  
+  this_var_changes = glm_changes[variable == this_var]
+  x_lab = paste0(this_var, " ORs (", this_var_changes[, round(100 * mean(LargerChange), 1)], "% Ratios >= ", estimated_sufficient_OR, ")")
+  
+  pdf(file = paste0("Results/Figs/ORChanges_", this_var, ".pdf"), width = 6, height = 3)
+  print(
+    ggplot(this_var_changes, aes(x = odds_ratio_change)) + 
+      geom_histogram(bins = 30) + scale_x_log10() + theme_bw() + labs(x = x_lab) +
+      geom_vline(xintercept = c(1/estimated_sufficient_OR, estimated_sufficient_OR), lty = 2)
+  )
+  dev.off()
+}
+
 
 
 
