@@ -415,7 +415,12 @@ statistics_for_paper = c(
   paste0(
     "Our lower confidence bound was $",
     round(quantile(min_lambdas$min_lambda_val, 0.05), 3),
-    "$, meaning that it is highly unlikely the true ATE would be negative unless"
+    "$, meaning that it is highly unlikely the true ATE would be negative unless ",
+    "unobserved confounders increased the odds of treatment in some covariate level by $> ",
+    round(100 * (quantile(min_lambdas$min_lambda_val, 0.05) - 1), 1), 
+    "\\%$ or decreased the odds of treatment in some covariate level by $> ",
+    round(100 * (1 - 1 / quantile(min_lambdas$min_lambda_val, 0.05)), 1),
+    "\\%$"
   )
 )
 
